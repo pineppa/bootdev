@@ -34,7 +34,7 @@ func main() {
 	}
 
 	if err := cmds.Run(&state, cmd); err != nil {
-		fmt.Printf("Error: %v", err)
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
 	os.Exit(0)

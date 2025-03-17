@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gator/internal/config"
 	"gator/internal/database"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,7 +33,10 @@ func (c *CliCommands) Register(name string, f func(*CliState, CliCommand) error)
 
 // This method runs a given command with the provided CliState if it exists.
 func (c *CliCommands) Run(s *CliState, cmd CliCommand) error {
-	f := c.Commands[cmd.Name]
+	f, ok := c.Commands[cmd.Name]
+	if !ok {
+		return fmt.Errorf("invalid command")
+	}
 	err := f(s, cmd)
 	return err
 }
@@ -54,6 +58,7 @@ func RegisterCommands() CliCommands {
 	cmds.Register("following", HandlerFollowing)
 	cmds.Register("unfollow", HandlerUnfollow)
 	//	cmds.Register("unfollow", middlewareLoggedIn(HandleUnfollow))
+	cmds.Register("browse", HandlerBrowse)
 	return cmds
 }
 
@@ -137,13 +142,46 @@ func HandlerUsers(s *CliState, cmd CliCommand) error {
 }
 
 func HandlerAgg(s *CliState, cmd CliCommand) error {
-	ctx := context.Background()
-	rssFeed, err := fetchFeed(ctx, rssUrl)
-	if err != nil {
-		fmt.Printf("Error fetching the feed: %v\n", err)
-		return nil
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("invalid time_between_reqs argument")
 	}
-	printRssFeed(rssFeed)
+	timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
+	if err != nil || timeBetweenRequests < time.Second {
+		return fmt.Errorf("invalid time_between_reqs argument constructor")
+	}
+	ticker := time.NewTicker(timeBetweenRequests)
+	defer ticker.Stop()
+	fmt.Println("Collecting feeds every: ", timeBetweenRequests)
+
+	for ; ; <-ticker.C {
+		if err := scrapeFeeds(s); err != nil {
+			return err
+		}
+	}
+}
+
+func HandlerBrowse(s *CliState, cmd CliCommand) error {
+	var defaultLimit int32
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("incorrect amount of arguments")
+	}
+	if len(cmd.Args) == 1 {
+		lim, _ := strconv.ParseInt(cmd.Args[0], 10, 32)
+		defaultLimit = int32(lim)
+	} else {
+		defaultLimit = 2
+	}
+	posts, err := s.DbQueries.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		Name:  sql.NullString{String: s.Cfg.CurrentUserName, Valid: true},
+		Limit: int32(defaultLimit),
+	})
+	if err != nil {
+		return fmt.Errorf("invalid GetPOst squence - %v", err)
+	}
+	for index, item := range posts {
+		fmt.Printf("Post #%d:\n", index+1)
+		printPost(item)
+	}
 	return nil
 }
 

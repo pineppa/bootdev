@@ -12,15 +12,19 @@ You can use this project to keep up with your favorite blogs, news sites, podcas
 
 # How to run it
 
-Clone the repository in your preferred location destination. Run the command ```go build -d ./gator``` and use `./gator` followed by the command you would like to run. These are the possible commands:
+Clone the repository in your preferred location destination. You will need Go and Postgres to make it work.
+Run the command ```go install``` and use `gator` followed by the command you would like to run. These are the possible commands:
 * User management:
     * `register <username>`: Registers a new user and logs into the newly created account; 
     * `login <username>`: Logs into an account previously added via the `register` command;
     * `users`: Returns the list of registered users;
 * Aggregation of new feeds:
-    * `agg`: fetches the RSS feeds, parses them, and prints the posts to the console... All in a long-running loop that should be kept in a background process in a separated terminale than the one used to operate Gator;
+    * `agg <feed_refresh_time>`: fetches the RSS feeds, parses them, and prints the posts to the console... All in a long-running loop that should be kept in a background process in a separated terminal than the one used to operate Gator;
+        * Valid time units are "s", "m", "h"
     * `addfeed <feed_name> <feed_url>`: Adds a new RSS feed and assigns it to the currently logged in person;
     * `feeds`: Shows the list of all the available feeds;
+* Post interaction:
+    * `browse <optional: post_amount>`: Shows the latest posts from the logged user
 * Follows management:
     * `follow`: Adds an existing RSS feed to the currently logged in user;
     * `following`: Shows the list of all the Feeds being followed by a specific user;
