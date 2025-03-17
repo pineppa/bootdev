@@ -11,8 +11,9 @@ Note: This project won't be improved in the near future
 ## Linux
 
 - Download the repository in your preferred folder.
-- Open the terminal in the same folder and add run ```go build -o pokeCLI```
-- Play the game with `./pokeCLI`
+- Open the terminal in the same folder and either run:
+    - `go build -o pokeCLI` and play the game with `./pokeCLI`
+    - `go install` and play it with `pokeCLI`
 
 # How to play:
 
